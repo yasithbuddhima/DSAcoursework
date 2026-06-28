@@ -172,3 +172,47 @@ void displayQueue(WaitingQueue* q){
     
     printf("\n/-------------- END -------------- /\n\n");
 }
+
+
+
+// Drop History Stack (Linked List-Based Stack)
+
+
+typedef struct History{
+    struct StudentNode * top;
+}History;
+
+void initHistory(History *h){
+    h->top = NULL;
+}
+
+void pushHistory(History * h , Student stu){
+    struct StudentNode * nw = (struct StudentNode*)malloc(sizeof(struct StudentNode));
+    nw->student = stu;
+    nw->next = h->top;
+    h->top = nw;
+}
+
+Student popHistory(History * h){
+    if(h->top == NULL) return (Student){0};
+    struct StudentNode * node = h->top;
+    Student stu = h->top->student;
+    h->top = h->top->next;
+    free(node);
+    return stu;
+}
+
+void displayHistory(History* h){
+    printf("\n/---------- Drop History ---------- /\n");
+    struct StudentNode * tmp = h->top;
+
+    if (tmp ==NULL)printf("\t History Is Empty");
+    int x = 1;
+    
+    while (tmp != NULL) {
+        printf("%d). { Id: %s, Name: %s }\n", x++ , tmp->student.id, tmp->student.name);
+        tmp = tmp->next;
+    }
+    
+    printf("\n/-------------- END -------------- /\n\n");
+}
