@@ -91,7 +91,7 @@ void removeRegisteredStudent(RegList * list, Student stu) {
     free(curr);
 }
 
-bool searchStu(RegList* list ,  char id){
+bool searchStu(RegList* list ,  char id[]){
     struct StudentNode *tmp = list->head;
 
     while (tmp != NULL) {
@@ -115,3 +115,60 @@ void displayRegStu(RegList* list){
     printf("\n/------------------- END ------------------- /\n\n");
 }
 
+// Waiting Queue (Linked List-Based Queue)
+
+typedef struct WaitingQueue{
+    struct StudentNode * front;
+    struct StudentNode * rear;
+}WaitingQueue;
+
+void initQueue(WaitingQueue * q){
+    q->front = q->rear =NULL;
+}
+
+void enqueue(WaitingQueue * q , Student stu){
+    struct StudentNode * nw  =(struct StudentNode *)malloc(sizeof(struct StudentNode));
+    nw->student = stu;
+    nw->next=NULL;
+
+    if (q->front == NULL){
+        q->front = nw;
+        q->rear = nw;
+        return;
+    }
+
+    q->rear->next= nw;
+    q->rear = nw;
+
+}
+
+Student dequeue(WaitingQueue * q ){
+    if(q->front == NULL) return (Student){0};
+
+    struct StudentNode *tmp = q->front;
+    Student student = tmp->student; 
+
+    q->front = q->front->next;
+
+    if (q->front == NULL) q->rear = NULL;
+
+    free(tmp);
+    return student;
+
+}
+
+
+void displayQueue(WaitingQueue* q){
+    printf("\n/---------- Waiting Queue ---------- /\n");
+    struct StudentNode * tmp = q->front;
+
+    if (tmp ==NULL)printf("\t Queue Is Empty");
+    int x = 1;
+    
+    while (tmp != NULL) {
+        printf("%d). { Id: %s, Name: %s }\n", x++ , tmp->student.id, tmp->student.name);
+        tmp = tmp->next;
+    }
+    
+    printf("\n/-------------- END -------------- /\n\n");
+}
