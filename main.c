@@ -2,44 +2,21 @@
 #include<stdlib.h>
 #include <string.h>
 
+#define ACCOMMODATIONS 5
+#define NAME_LENGTH 30
+#define ID_LENGTH 20
+
 typedef enum{
     true = 1 , false = 0
 }bool;
 
-typedef struct Student;
-struct StudentNode;
-typedef struct RegList;
-
-int main(void)
-{
-    // TODO: 1. Add Student Type
-
-    // TODO: 2. Student Registration List (Linked List)
-
-    // TODO: 3. Waiting Queue (Linked List-Based Queue)
-
-    // TODO: 4. Drop History Stack (Linked List-Based Stack)
-
-    // TODO: 5. Main Menu
-
-    return 0;
-}
-
-
-// Student Structure
-
-
 typedef struct Student{
-    char id[20];
-    char name[30];
+    char id[ID_LENGTH];
+    char name[NAME_LENGTH];
 }Student;
 
-
-
-// Student Linked List
-
 struct StudentNode{
-    Student  student;
+    Student student;
     struct StudentNode * next;
 };
 
@@ -47,12 +24,147 @@ typedef struct RegList{
     struct StudentNode * head;
 }RegList;
 
+typedef struct WaitingQueue{
+    struct StudentNode * front;
+    struct StudentNode * rear;
+}WaitingQueue;
+
+typedef struct History{
+    struct StudentNode * top;
+}History;
+
+void initRegList(RegList * list);
+void initQueue(WaitingQueue * q);
+void initHistory(History * h);
+int sizeOFList(RegList * l);
+Student makeStudent( char id[],  char name[]);
+void addRegisteredStudent(RegList * list ,Student stu);
+void removeRegisteredStudent(RegList * list, Student stu);
+Student* searchStu(RegList* list ,  char id[]);
+void displayRegStu(RegList* list);
+void enqueue(WaitingQueue * q , Student stu);
+Student dequeue(WaitingQueue * q );
+void displayQueue(WaitingQueue* q);
+bool isQueueEmpty(WaitingQueue *q);
+void pushHistory(History * h , Student stu);
+Student popHistory(History * h);
+void displayHistory(History* h);
+bool isHistoryEmpty(History * h);
+
+int main(void)
+{
+    
+    RegList registeredStudents;
+    RegList * registeredStudents_ptr = &registeredStudents;
+    initRegList(registeredStudents_ptr);
+    
+    WaitingQueue waitingQueue;
+    WaitingQueue * waitingQueue_ptr = &waitingQueue;
+    initQueue(waitingQueue_ptr);
+    
+    History history;
+    History * history_ptr = &history;
+    initHistory(history_ptr);
+
+    int option;
+    char name[NAME_LENGTH] , id[ID_LENGTH];
+    Student * stu_ptr;
+
+    do
+    {
+        printf("\t\tMain Menu\n");
+        printf("1.Register Student\n");
+        printf("2.Drop Student\n");
+        printf("3.Undo Last Drop\n");
+        printf("4.Search Student\n");
+        printf("5.Display Registered Students\n");
+        printf("6.Display Waiting Queue\n");
+        printf("7.Display Drop History\n");
+        printf("8.Exit\n\n\n\n");
+
+        printf("Enter your choice: ");
+        scanf("%d",&option);
+
+        switch (option)
+        {
+        case 1:
+            printf("Enter Student name :");
+            scanf("%s" , name);
+            printf("Enter Student id :");
+            scanf("%s" , id);
+    
+            sizeOFList(registeredStudents_ptr) >= ACCOMMODATIONS  
+                ? enqueue(waitingQueue_ptr , makeStudent(id , name))
+                : addRegisteredStudent(registeredStudents_ptr , makeStudent(id , name)) ;
+
+            break;
+        
+        case 2:
+            printf("Enter Student id :");
+            scanf("%s" , id);
+            
+            stu_ptr = searchStu(registeredStudents_ptr , id);
+            if ( stu_ptr == NULL) break;
+            Student tmp = *stu_ptr;
+            removeRegisteredStudent(registeredStudents_ptr , tmp);
+            pushHistory(history_ptr , tmp);
+            
+            !isQueueEmpty(waitingQueue_ptr) 
+                ? addRegisteredStudent(registeredStudents_ptr , dequeue(waitingQueue_ptr))
+                : NULL;
+            break;
+        case 3:
+            if(isHistoryEmpty(history_ptr)){
+                printf("History is Empty\n");
+                break;
+            }
+            *stu_ptr = popHistory(history_ptr);
+            
+            sizeOFList(registeredStudents_ptr) <= ACCOMMODATIONS && stu_ptr != NULL
+                ? addRegisteredStudent(registeredStudents_ptr , *stu_ptr)
+                : NULL;
+
+            break;
+        case 4:
+            printf("Enter Student id to search:");
+            scanf("%s" , id);
+
+            stu_ptr = searchStu(registeredStudents_ptr , id);
+            if(stu_ptr == NULL){
+                break;
+            }
+            
+            printf("Student Found !\n");
+            printf("{\n\tID : %s\n\t Name : %s\n}\n" , stu_ptr->id , stu_ptr->name);          
+            break;
+        case 5: 
+            displayRegStu(registeredStudents_ptr);
+            break;
+        case 6:
+            displayQueue(waitingQueue_ptr);
+            break;
+        case 7:
+            displayHistory(history_ptr);
+            break;
+        default:
+            printf("Please Enter a valid option 1 to 8\n");
+            break;
+        }
+    } while (option != 8);
+    
+    
+    return 0;
+}
+
 void initRegList(RegList * list){
     list->head = NULL;
 }
 
-Student student(char id, char name) {
-    return (Student){id, name};
+Student makeStudent( char id[],  char name[]) {
+    Student stu;
+    strcpy(stu.id , id);
+    strcpy(stu.name  , name);
+    return stu;
 }
 
 void addRegisteredStudent(RegList * list ,Student stu ){
@@ -74,31 +186,31 @@ void removeRegisteredStudent(RegList * list, Student stu) {
     struct StudentNode *curr = list->head;
     struct StudentNode *prev = NULL;
 
-    if (strcmp(curr->student.id , stu.id)) {
+    if (strcmp(curr->student.id , stu.id) == 0) {
         list->head = curr->next; 
         free(curr);         
         return;
     }
 
-    while (curr != NULL && !strcmp(curr->student.id , stu.id)) {
+    while (curr != NULL && strcmp(curr->student.id , stu.id) != 0) {
         prev = curr;
         curr = curr->next;
     }
 
     if (curr == NULL) return;
-
+    if(curr->next == NULL) prev->next = NULL;
     prev->next = curr->next;
     free(curr);
 }
 
-bool searchStu(RegList* list ,  char id[]){
+Student* searchStu(RegList* list ,  char id[]){
     struct StudentNode *tmp = list->head;
 
     while (tmp != NULL) {
-        if (strcmp(tmp->student.id , id)) return true;
+        if (strcmp(tmp->student.id , id) == 0) return &(tmp->student);
         tmp = tmp->next; 
     }
-    return false;
+    return NULL;
 }
 
 void displayRegStu(RegList* list){
@@ -115,12 +227,18 @@ void displayRegStu(RegList* list){
     printf("\n/------------------- END ------------------- /\n\n");
 }
 
-// Waiting Queue (Linked List-Based Queue)
+int sizeOFList(RegList * l){
+    struct StudentNode * tmp = l->head;
+    int count = 0;
+    while (tmp != NULL){
+        count++;
+        tmp = tmp->next; 
+    }
+    return count;
+    
+}
 
-typedef struct WaitingQueue{
-    struct StudentNode * front;
-    struct StudentNode * rear;
-}WaitingQueue;
+// Waiting Queue (Linked List-Based Queue)
 
 void initQueue(WaitingQueue * q){
     q->front = q->rear =NULL;
@@ -173,14 +291,12 @@ void displayQueue(WaitingQueue* q){
     printf("\n/-------------- END -------------- /\n\n");
 }
 
+bool isQueueEmpty(WaitingQueue *q){
+    return q->front == NULL ? true :false;
+}
 
 
 // Drop History Stack (Linked List-Based Stack)
-
-
-typedef struct History{
-    struct StudentNode * top;
-}History;
 
 void initHistory(History *h){
     h->top = NULL;
@@ -194,7 +310,7 @@ void pushHistory(History * h , Student stu){
 }
 
 Student popHistory(History * h){
-    if(h->top == NULL) return (Student){0};
+    // if(h->top == NULL) return NULL;
     struct StudentNode * node = h->top;
     Student stu = h->top->student;
     h->top = h->top->next;
@@ -215,4 +331,8 @@ void displayHistory(History* h){
     }
     
     printf("\n/-------------- END -------------- /\n\n");
+}
+
+bool isHistoryEmpty(History * h){
+    return h->top == NULL ? true : false;
 }
